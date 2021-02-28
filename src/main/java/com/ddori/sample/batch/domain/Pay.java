@@ -28,6 +28,7 @@ public class Pay {
     private Long amount;
     private String txName;
     private LocalDateTime txDateTime;
+    private boolean successStatus;
 
     public Pay(Long amount, String txName, String txDateTime) {
         this.amount = amount;
@@ -40,5 +41,14 @@ public class Pay {
         this.amount = amount;
         this.txName = txName;
         this.txDateTime = LocalDateTime.parse(txDateTime, FORMATTER);
+    }
+
+    public Pay(Long amount, boolean successStatus) {
+        this.amount = amount;
+        this.successStatus = successStatus;
+    }
+
+    public void success() {
+        this.successStatus = true;
     }
 }
