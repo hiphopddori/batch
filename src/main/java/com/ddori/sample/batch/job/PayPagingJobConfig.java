@@ -10,35 +10,25 @@ import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemProcessor;
-import org.springframework.batch.item.database.JdbcCursorItemReader;
 import org.springframework.batch.item.database.JpaItemWriter;
-import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder;
+import org.springframework.batch.item.database.JpaPagingItemReader;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
 
 import javax.persistence.EntityManagerFactory;
-import javax.sql.DataSource;
 
-import static com.ddori.sample.batch.job.PayCursorJobConfig.JOB_NAME;
+import static com.ddori.sample.batch.job.PayPagingJobConfig.JOB_NAME;
 
 @Slf4j
 @RequiredArgsConstructor
 @Configuration
 @ConditionalOnProperty(name = "job.name", havingValue = JOB_NAME)
-/*
-조회할 데이터가 너무 많아 부하가 걱정 되신다면 Paging을 써야하기 때문에 2번째 방법을 쓰시고
-데이터 자체가 많지 않다면 Cursor(PayCursorJobConfig) 방식을 추천합니다
-*/
-public class PayCursorJobConfig {
-
-    public static final String JOB_NAME = "payCursorJob";
-
+public class PayPagingJobConfig {
+    public static final String JOB_NAME = "payPagingFailJob";
     private final EntityManagerFactory entityManagerFactory;
     private final StepBuilderFactory stepBuilderFactory;
     private final JobBuilderFactory jobBuilderFactory;
-    private final DataSource dataSource;
 
     private final int chunkSize = 10;
 
@@ -62,14 +52,28 @@ public class PayCursorJobConfig {
 
     @Bean
     @StepScope
-    public JdbcCursorItemReader<Pay> payPagingReader() {
-        return new JdbcCursorItemReaderBuilder<Pay>()
-                .sql("SELECT * FROM pay p WHERE p.success_status = false")
-                .rowMapper(new BeanPropertyRowMapper<>(Pay.class))
-                .fetchSize(chunkSize)
-                .dataSource(dataSource)
+    public JpaPagingItemReader<Pay> payPagingReader() {
+        /* paging로 chunkSize로 10건 Update로 인해서 이제 테이블에는 false인 데이터가 40개만 존재
+        아래 쿼리시 offset 11 limit 10 로 인해 배치 update 누락 발생할수 있어 아래 코드로 보완 처리 함
+        return new JpaPagingItemReaderBuilder<Pay>()
+                .queryString("SELECT p FROM Pay p WHERE p.successStatus = false")
+                .pageSize(chunkSize)
+                .entityManagerFactory(entityManagerFactory)
                 .name("payPagingReader")
                 .build();
+         */
+        JpaPagingItemReader<Pay> reader = new JpaPagingItemReader<Pay>() {
+            @Override
+            public int getPage() {
+                return 0;
+            }
+        };
+
+        reader.setQueryString("SELECT p FROM Pay p WHERE p.successStatus = false");
+        reader.setPageSize(chunkSize);
+        reader.setEntityManagerFactory(entityManagerFactory);
+        reader.setName("payPagingReader");
+        return reader;
     }
 
     @Bean
