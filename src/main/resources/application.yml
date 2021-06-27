@@ -3,6 +3,11 @@ spring:
     active: mysql
 
 spring.batch.job.names: ${job.name:NONE}
+
+logging:
+  level:
+    root: info
+
 ---
 spring:
   profiles: local

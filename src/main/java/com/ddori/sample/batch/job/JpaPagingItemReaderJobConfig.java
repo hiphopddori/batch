@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Configuration;
 import javax.persistence.EntityManagerFactory;
 
 @Slf4j
-@Configuration
+//@Configuration
 @RequiredArgsConstructor
 public class JpaPagingItemReaderJobConfig {
 
@@ -50,6 +50,7 @@ public class JpaPagingItemReaderJobConfig {
                 .pageSize(chunkSize)
                 .queryString("SELECT p FROM Pay p WHERE amount >= 2000")
                 .build();
+
     }
 
     private ItemWriter<Pay> jpaPagingItemWriter() {

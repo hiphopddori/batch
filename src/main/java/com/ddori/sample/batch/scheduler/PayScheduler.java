@@ -17,12 +17,12 @@ import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
-@Component
+//@Component
 public class PayScheduler {
     private final JobLauncher jobLauncher;
     private final PayCursorJobConfig payCursorJobConfig;
 
-    @Scheduled(initialDelay = 10000, fixedDelay = 1000, cron = "1 * * * * ? *")
+    //@Scheduled(initialDelay = 10000, fixedDelay = 1000, cron = "1 * * * * ? *")
     public void runPaySuccessJob() {
         try {
             /*

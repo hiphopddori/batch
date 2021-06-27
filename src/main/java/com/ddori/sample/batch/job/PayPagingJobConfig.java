@@ -1,4 +1,5 @@
 package com.ddori.sample.batch.job;
+//https://github.com/jojoldu/spring-batch-in-action/blob/master/src/main/java/com/jojoldu/batch/example/reader/jdbc/JdbcPagingItemReaderJobConfiguration.java
 
 import com.ddori.sample.batch.domain.Pay;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import org.springframework.context.annotation.Configuration;
 import javax.persistence.EntityManagerFactory;
 
 import static com.ddori.sample.batch.job.PayPagingJobConfig.JOB_NAME;
+
 
 @Slf4j
 @RequiredArgsConstructor
@@ -62,6 +64,7 @@ public class PayPagingJobConfig {
                 .name("payPagingReader")
                 .build();
          */
+
         JpaPagingItemReader<Pay> reader = new JpaPagingItemReader<Pay>() {
             @Override
             public int getPage() {
