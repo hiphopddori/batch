@@ -1,6 +1,7 @@
 package com.ddori.sample.batch.job;
 
 import com.ddori.sample.batch.domain.Pay;
+import com.ddori.sample.batch.util.DailyJobTimestamper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -47,6 +48,7 @@ public class JdbcPagingJobConfig {
     public Job jdbcPagingItemReaderJob() throws Exception {
         return jobBuilderFactory.get(JOB_NAME)
                 .start(jdbcPagingItemReaderStep())
+                .incrementer(new DailyJobTimestamper())
                 .build();
     }
 
