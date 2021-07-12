@@ -16,19 +16,18 @@ import java.time.format.DateTimeFormatter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Entity
+//@Entity
 public class Pay {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss");
 
-    @Id
-    @GeneratedValue(strategy =
-            GenerationType.IDENTITY)
+    //@Id
+    //@GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long amount;
     private String txName;
     private LocalDateTime txDateTime;
-    private boolean successStatus;
+    private Boolean successStatus;
 
     public Pay(Long amount, String txName, String txDateTime) {
         this.amount = amount;
@@ -43,7 +42,7 @@ public class Pay {
         this.txDateTime = LocalDateTime.parse(txDateTime, FORMATTER);
     }
 
-    public Pay(Long amount, boolean successStatus) {
+    public Pay(Long amount, Boolean successStatus) {
         this.amount = amount;
         this.successStatus = successStatus;
     }

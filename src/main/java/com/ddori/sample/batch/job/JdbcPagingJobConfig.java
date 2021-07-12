@@ -14,13 +14,16 @@ import org.springframework.batch.item.database.*;
 import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
 import org.springframework.batch.item.database.builder.JdbcPagingItemReaderBuilder;
 import org.springframework.batch.item.database.support.SqlPagingQueryProviderFactoryBean;
+import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 
 import javax.sql.DataSource;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.ddori.sample.batch.job.JdbcPagingJobConfig.JOB_NAME;
@@ -49,6 +52,8 @@ public class JdbcPagingJobConfig {
         return jobBuilderFactory.get(JOB_NAME)
                 .start(jdbcPagingItemReaderStep())
                 .incrementer(new DailyJobTimestamper())
+                // .validator()
+                // .listener()
                 .build();
     }
 
@@ -58,9 +63,21 @@ public class JdbcPagingJobConfig {
         return stepBuilderFactory.get("jdbcPagingItemReaderStep")
                 .<Pay, Pay>chunk(chunkSize)
                 .reader(jdbcPagingItemReader())
-                .writer(jdbcBatchItemWriter())
+                //.reader(testPayReader())
+                .writer(jdbcBatchItemWriterUpdate())
+                //.listener(154 참조)
                 .build();
     }
+
+    @Bean
+    @StepScope
+    public ListItemReader<Pay> testPayReader() {
+        log.info("********** This is testPayReader");
+        List<Pay> pays = new ArrayList<Pay>();
+
+        return new ListItemReader<>(pays);
+    }
+
 
     @Bean
     public JdbcPagingItemReader<Pay> jdbcPagingItemReader() throws Exception {
@@ -81,9 +98,29 @@ public class JdbcPagingJobConfig {
     @Bean
     public JdbcBatchItemWriter jdbcBatchItemWriter() {
         return new JdbcBatchItemWriterBuilder<Pay>()
+                .beanMapped()
                 .dataSource(dataSource)
                 .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<Pay>())
                 .sql("INSERT INTO pay2(amount, tx_name, tx_date_time) VALUES (:amount, :txName, :txDateTime)")
+                .build();
+    }
+
+    @Bean
+    public JdbcBatchItemWriter jdbcBatchItemWriterUpdate() {
+        return new JdbcBatchItemWriterBuilder<Pay>()
+                .beanMapped()
+
+                .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<Pay>())
+                .sql("UPDATE PAY SET" +
+                        " success_status = false" +
+                        " WHERE id = :id"
+                 )
+                //.assertUpdates(true)
+                /*.sql("UPDATE pay SET" +
+                        "amount = COALESCE(:amount, amount)" +
+                        "WHERE id = :id"
+                 )*/
+                .dataSource(dataSource)
                 .build();
     }
 
@@ -92,14 +129,14 @@ public class JdbcPagingJobConfig {
         return list -> {
             String id = "";
             for (Pay pay: list) {
-                //log.info("PAY_LOG" + pay.toString());
-                //pay.setSuccessStatus(false);
+                log.info("PAY_LOG" + pay.toString());
+                // pay.setSuccessStatus(false);
                 //if (id.length() > 0) id+=",";
                 //id+=String.valueOf(pay.getId());
                 new JdbcBatchItemWriterBuilder<Pay>()
                         .dataSource(dataSource)
                         .sql("INSERT INTO pay2(amount, tx_name, tx_date_time) VALUES (:amount, :txName, :txDateTime)")
-                        //.sql("UPDATE pay SET success_status = 0 where id = :id")
+                        //.sql("UPDATE pay SET success_status = false where id = :id")
                         .beanMapped()
                         .build();
             }
@@ -136,7 +173,7 @@ public class JdbcPagingJobConfig {
         SqlPagingQueryProviderFactoryBean queryProvider = new SqlPagingQueryProviderFactoryBean();
         queryProvider.setDataSource(dataSource); // Database에 맞는 PagingQueryProvider를 선택하기 위해
         //queryProvider.setSelectClause("id, amount, tx_name, tx_date_time");
-        queryProvider.setSelectClause("id, amount, tx_date_time");
+        queryProvider.setSelectClause("id, amount, tx_date_time, success_status");
         queryProvider.setFromClause("from pay");
         queryProvider.setWhereClause("where amount >= :amount");
 
